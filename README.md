@@ -1,4 +1,5 @@
-# El código en "degradation_model.ipynb" utiliza una base de datos pública de Standford, para no subirlo al repo, dejo el link al su ubicación
+## Sobre el modelo de degradación 
+El código en `degradation_model.ipynb` utiliza una base de datos pública de Standford, para no subirlo al repo, dejo el link al su ubicación
 
 https://drive.google.com/drive/folders/1mSHdfOCpTYmt3MhcqC44RVpwrRL-YhxW?usp=sharing
 
