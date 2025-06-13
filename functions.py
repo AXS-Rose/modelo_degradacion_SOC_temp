@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 # Funciones auxiliares
 def synthetic_profile(dt=1, dis_curr=-0.5, charg_curr=0.5, lower_capacity=-2.5, upper_capacity=2.5, N=1000):
     # create a capacity profile to simulate a synthetic degradation profile
@@ -30,7 +33,7 @@ def profile_repeat(cap_profile, N=1000):
     repeated_profile = cap_profile * N  # Repeat the capacity profile N times
     return repeated_profile
 
-def log_a(self,a,x):
+def log_a(a,x):
     y = np.log(x)/np.log(a)
     return y
 
@@ -49,7 +52,7 @@ def valorización(SOH_actual_prop, cap_0_prop, min_cap_app, valor_ideal, prop_cy
     min_SOH = min_cap_app/cap_0_prop # calculate minimum SOH for the proposed battery
     deg_factor = (1 - SOH_actual_prop) / (1 - max([0.6,min_SOH]))  # Calculate the degradation factor
     
-    cycle_factor = prop_cycles/ideal_cycles
+    cycle_factor = np.clip(prop_cycles/ideal_cycles,0,1)
     
     valor_prop = valor_ideal * deg_factor * cycle_factor # compute the economic value of the proposed battery
 
@@ -105,6 +108,8 @@ def total_cycle(battery_model,initial_SOH,terminal_SOH,
 
             # Check if an equivalent cycle is completed
             if -100 >= soc_acc:
+                ssr = max(soc_counting_eqcycle) - min(soc_counting_eqcycle)
+                assr = np.mean(soc_counting_eqcycle)
                 eta_k_eqcycle = battery_model.get_factor(soc_counting_eqcycle, profile_amb_temp)  # Get degradation factor
                 current_Q *= eta_k_eqcycle[0]  # Update the current capacity based on degradation
                 current_soh = current_Q / battery_model.parameters["Qmax"]
@@ -113,7 +118,7 @@ def total_cycle(battery_model,initial_SOH,terminal_SOH,
                 Q_values.append(current_Q)  # Append the updated capacity
                 eq_cycle_count += 1  # Increment the equivalent cycle count
 
-                print(f'Run: {i + 1} Cycle: {eq_cycle_count} Current SOH: {current_soh}', end='\r')
+                print(f'Run: {i + 1} Cycle: {eq_cycle_count} Current SOH: {current_soh:.4f}', end='\r',flush=True)
 
                 # Break the loop if the terminal SOH is reached
                 if current_soh < terminal_SOH:
@@ -123,7 +128,7 @@ def total_cycle(battery_model,initial_SOH,terminal_SOH,
 
                     max_len = max(max_len, len(Q_values))   # remember the tallest column
                     soh_columns.append(Q_values)            # keep raw list for now
-                    print("Run", i + 1, "completed with SOH:", current_soh, "and equivalent cycles:", eq_cycle_count)
+                    print(f"Run {i + 1} completed with SOH: {current_soh:.4f} and equivalent cycles: {eq_cycle_count}")
                     break
 
     # pad every run up to max_len
@@ -138,9 +143,10 @@ def total_cycle(battery_model,initial_SOH,terminal_SOH,
     })
 
     # Get the mean and standard deviation of the SOH values
-    SOH_df = total_soh_values.iloc[:, :MC_runs]  # Select only the columns from 1 to N (number of simulations)
+    SOH_df = total_soh_values.iloc[:, :MC_runs].copy()  # Select only the columns from 1 to N (number of simulations)
     SOH_df['mean'] = SOH_df.mean(axis=1)
     SOH_df['std'] = SOH_df.std(axis=1)
+
 
     total_cycles = np.mean(total_eqcycle_values)
 

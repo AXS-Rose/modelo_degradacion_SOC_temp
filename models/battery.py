@@ -4,9 +4,9 @@ from sklearn.neighbors import KNeighborsRegressor
 from scipy.stats import gaussian_kde
 from functions import log_a, valorización, total_cycle, synthetic_profile
 
-class BatteryModel:
+class Battery_Degradation_Model:
 
-    def __init__(self, Qmax=4.850, degradation_percentage=0.8, life_cycles=650,ds_SR = 100, degradation_data=None):
+    def __init__(self, Qmax=4.850, degradation_percentage=0.8, life_cycles=650,ds_SR=100, degradation_data=None):
         
         self.parameters = {
             "Qmax": Qmax,  # Carga nominal (Ah)
@@ -53,15 +53,14 @@ class BatteryModel:
         self.knn = KNeighborsRegressor(n_neighbors=3, weights="distance")
         self.knn.fit(X, y)  # Entrenar el modelo k-NN
 
-        print("modelo de celda seteado. Tabla de degradación: ",self.parameters["degradation_data"])
+        print("Modelo de celda seteado con exito")
 
     def set_kde(self):
             path = "C:/Users/Bruno/OneDrive - Universidad de Chile/BGMG/CASE/git_repositories/degradation_model/uncertainty_characterization/eta_values_sorted.csv"
             eta_values = pd.read_csv(path,delimiter=',',header=None)
             eta_values = eta_values.values.flatten()
             self.kde = gaussian_kde(eta_values)
-            print("KDE has been setted")
-            # return(kde)
+
 
     def set_std_cycles(self):
             SR_0 = 100 # soc range de un ciclo equivalente 
@@ -69,13 +68,11 @@ class BatteryModel:
             eq_cycle = self.parameters["life_cycles"]*(SR/SR_0)
 
             eta_0 = self.parameters["degradation_percentage"]**(1/eq_cycle)
-            eq_cycle08 = 1/self.log_a(0.8,eta_0)
+            eq_cycle08 = 1/log_a(0.8,eta_0)
 
             self.parameters["life_cycles"] = eq_cycle08
             self.parameters["degradation_percentage"] = 0.8
             self.parameters["SR"] = 100
-
-            print("Life cycle has been setted")
 
     def temp_factor(self, temp):
         # definimos los coeficientes ya fiteados
