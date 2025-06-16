@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import KNeighborsRegressor
 from scipy.stats import gaussian_kde
-from functions import log_a, valorización, total_cycle, synthetic_profile
+from functions import log_a
 
 class Battery_Degradation_Model:
 
@@ -68,7 +68,7 @@ class Battery_Degradation_Model:
             eq_cycle = self.parameters["life_cycles"]*(SR/SR_0)
 
             eta_0 = self.parameters["degradation_percentage"]**(1/eq_cycle)
-            eq_cycle08 = 1/log_a(0.8,eta_0)
+            eq_cycle08 = 1/self.log_a(0.8,eta_0)
 
             self.parameters["life_cycles"] = eq_cycle08
             self.parameters["degradation_percentage"] = 0.8
@@ -84,10 +84,11 @@ class Battery_Degradation_Model:
         factor = np.clip(polynomial(temp),0,1)
         return factor
     
-    def get_factor(self, soc, temp):
-            # Obtenermos el SSR y el ASSR
-            ssr = max(soc) - min(soc)
-            assr = np.mean(soc)
+    def log_a(self,a,x):
+        y = np.log(x)/np.log(a)
+        return y
+    
+    def get_factor(self,ssr, assr, temp):
 
             # Obtenemos el factor para ponderar los ciclos
             knn_factor = self.knn.predict(
